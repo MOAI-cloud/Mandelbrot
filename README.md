@@ -4,13 +4,14 @@ A CUDA/CMake Mandelbrot renderer that generates high-resolution PNG stills and s
 
 ## Demo
 
-<video src="https://raw.githubusercontent.com/MOAI-cloud/Mandelbrot/main/assets/mandelbrot-zoom.mp4" controls autoplay muted loop playsinline width="100%"></video>
+<img src="media/mandelbrot-zoom.gif" alt="Mandelbrot CUDA zoom demo" width="100%">
 
 ## Features
 
 - GPU Mandelbrot rendering with CUDA
 - PNG image output through `stb_image_write.h`
 - MP4 zoom animation output through `ffmpeg`
+- GIF demo preview for GitHub README rendering
 - Smooth escape-time coloring for continuous gradients
 - Colormap presets: `magma`, `inferno`, `viridis`, `cividis`, `turbo`, and `classic`
 - Optional NVIDIA hardware encoding with `h264_nvenc` or `hevc_nvenc`
@@ -53,7 +54,7 @@ Render a detailed still image around a classic Seahorse Valley zoom target:
     --output output/zoom.png
 ```
 
-Render a README-friendly 720p zoom video:
+Render a 720p zoom video that can be converted into a README GIF:
 
 ```sh
 ./build/mandelbrot_cuda \
@@ -72,6 +73,14 @@ Render a README-friendly 720p zoom video:
 ```
 
 If your `ffmpeg` build supports NVIDIA hardware encoding, add `--video-encoder h264_nvenc` for faster MP4 encoding. `libx264` is the default because it is widely available and reliable on machines without NVENC.
+
+Create the GIF preview used in this README:
+
+```sh
+ffmpeg -y -i output/mandelbrot-zoom.mp4 \
+    -vf "fps=15,scale=960:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer:bayer_scale=3" \
+    media/mandelbrot-zoom.gif
+```
 
 ## Options
 
@@ -101,10 +110,10 @@ For video output, the renderer interpolates from `--scale` to `--end-scale` over
 
 ```txt
 mandelbrot-cuda/
-├── assets/
-│   └── mandelbrot-zoom.mp4
 ├── CMakeLists.txt
 ├── README.md
+├── media/
+│   └── mandelbrot-zoom.gif
 ├── output/
 ├── src/
 │   ├── image_utils.cpp
