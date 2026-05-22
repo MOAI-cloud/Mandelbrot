@@ -54,7 +54,7 @@ Render a detailed still image around a classic Seahorse Valley zoom target:
     --output output/zoom.png
 ```
 
-Render a 720p zoom video used in README GIF:
+Render the 720p zoom video used in this README.md:
 
 ```sh
 ./build/mandelbrot_cuda \
