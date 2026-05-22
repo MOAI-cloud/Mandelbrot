@@ -60,14 +60,14 @@ Render a 720p zoom video that can be converted into a README GIF:
 ./build/mandelbrot_cuda \
     --width 1280 \
     --height 720 \
-    --iterations 2500 \
+    --iterations 5000 \
     --center-x -0.743643887037151 \
     --center-y 0.13182590420533 \
-    --scale 0.01 \
+    --scale 1 \
     --end-scale 0.00002 \
-    --frames 300 \
-    --fps 30 \
-    --colormap inferno \
+    --frames 600 \
+    --fps 60 \
+    --colormap classic \
     --no-image \
     --video output/mandelbrot-zoom.mp4
 ```
