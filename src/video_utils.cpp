@@ -4,6 +4,7 @@
 
 namespace {
 
+// Single-quote paths so spaces and shell metacharacters survive the command line.
 std::string quote_for_shell(const std::string& value) {
     std::string quoted("'");
 
@@ -19,7 +20,7 @@ std::string quote_for_shell(const std::string& value) {
     return quoted;
 }
 
-} // namespace
+}
 
 bool ffmpeg_available() {
     return std::system("command -v ffmpeg >/dev/null 2>&1") == 0;
@@ -45,6 +46,7 @@ VideoWriter::VideoWriter(const std::string& file_path, int width, int height, in
     const bool use_nvenc = encoder == VideoEncoder::H264Nvenc || encoder == VideoEncoder::HevcNvenc;
     const std::string encoder_options = use_nvenc ? " -preset fast -cq 18" : " -preset veryfast -crf 18";
 
+    // ffmpeg receives raw RGBA frames on stdin and writes the encoded MP4 file.
     const std::string command =
         "ffmpeg -y -loglevel error -f rawvideo -pix_fmt rgba -s:v " + std::to_string(width) + "x" +
         std::to_string(height) + " -r " + std::to_string(fps) +
@@ -76,6 +78,7 @@ bool VideoWriter::close() {
         return true;
     }
 
+    // Detach before pclose so the destructor can call close() safely later.
     std::FILE* pipe = pipe_;
     pipe_ = nullptr;
     return ::pclose(pipe) == 0;

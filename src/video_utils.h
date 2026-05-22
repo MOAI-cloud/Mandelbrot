@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <string>
 
+// ffmpeg encoders exposed by the command-line interface.
 enum class VideoEncoder {
     Libx264,
     H264Nvenc,
@@ -14,6 +15,7 @@ enum class VideoEncoder {
 bool ffmpeg_available();
 const char* video_encoder_name(VideoEncoder encoder);
 
+// Streams raw RGBA frames into an ffmpeg process.
 class VideoWriter {
   public:
     VideoWriter(const std::string& file_path, int width, int height, int fps, VideoEncoder encoder);

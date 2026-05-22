@@ -8,6 +8,7 @@ struct ColorRgb {
     double blue;
 };
 
+// Small palette tables live in constant GPU memory because every thread reads them.
 __device__ __constant__ ColorRgb magma_palette[] = {
     {0.0000, 0.0000, 0.0157}, {0.0941, 0.0588, 0.2392}, {0.2667, 0.0588, 0.4627},
     {0.4471, 0.1216, 0.5059}, {0.6196, 0.1843, 0.4980}, {0.8039, 0.2510, 0.4431},
@@ -45,6 +46,7 @@ __device__ __constant__ ColorRgb turbo_palette[] = {
 
 constexpr int palette_size = 10;
 
+// Skip iteration for regions that are analytically known to be inside the set.
 __device__ __forceinline__ bool is_inside_cardioid_or_bulb(double point_x, double point_y) {
     const double point_y_squared = point_y * point_y;
     const double shifted_x = point_x - 0.25;
@@ -74,6 +76,7 @@ __device__ __forceinline__ unsigned char color_to_byte(double value) {
     return static_cast<unsigned char>(clamp01(value) * 255.0 + 0.5);
 }
 
+// Interpolate palette stops so neighboring iteration counts blend smoothly.
 __device__ __forceinline__ ColorRgb sample_palette(const ColorRgb* palette, double value) {
     const double scaled_value = clamp01(value) * static_cast<double>(palette_size - 1);
     const int lower_index = static_cast<int>(scaled_value);
@@ -113,6 +116,7 @@ __device__ __forceinline__ ColorRgb sample_colormap(MandelbrotColormap colormap,
     }
 }
 
+// Smooth escape-time coloring removes hard bands between integer iterations.
 __device__ __forceinline__ double smooth_color_value(int iteration,
                                                      int max_iterations,
                                                      double real_squared,
@@ -125,6 +129,7 @@ __device__ __forceinline__ double smooth_color_value(int iteration,
     return pow(normalized_iteration, 0.35);
 }
 
+// Each CUDA thread shades one output pixel in the RGBA image.
 __global__ __launch_bounds__(256) void mandelbrot_kernel(uchar4* __restrict__ image,
                                                          int width,
                                                          int height,
@@ -179,7 +184,7 @@ __global__ __launch_bounds__(256) void mandelbrot_kernel(uchar4* __restrict__ im
                                       255);
 }
 
-} // namespace
+}
 
 cudaError_t launch_mandelbrot(std::uint8_t* device_image,
                               int width,
@@ -190,6 +195,7 @@ cudaError_t launch_mandelbrot(std::uint8_t* device_image,
                               double scale,
                               cudaStream_t stream,
                               MandelbrotColormap colormap) {
+    // Convert the requested center and vertical scale into complex-plane bounds.
     const double aspect_ratio = static_cast<double>(width) / static_cast<double>(height);
     const double view_width = scale * aspect_ratio;
     const double min_x = center_x - view_width * 0.5;
@@ -197,6 +203,7 @@ cudaError_t launch_mandelbrot(std::uint8_t* device_image,
     const double x_step = view_width / static_cast<double>(width);
     const double y_step = scale / static_cast<double>(height);
 
+    // 32 x 8 keeps 256 threads per block while covering neighboring x pixels together.
     const dim3 threads_per_block(32, 8);
     const dim3 blocks_per_grid((width + threads_per_block.x - 1) / threads_per_block.x,
                                (height + threads_per_block.y - 1) / threads_per_block.y);

@@ -13,6 +13,7 @@
 
 namespace {
 
+// Command-line configuration shared by still-image and video rendering paths.
 struct Options {
     int width = 1920;
     int height = 1080;
@@ -120,6 +121,7 @@ VideoEncoder parse_video_encoder(const char* value) {
     throw std::runtime_error("--video-encoder must be one of: libx264, h264_nvenc, hevc_nvenc");
 }
 
+// Parse flags into one options object so defaults and validation stay together.
 Options parse_options(int argc, char** argv) {
     Options options;
     bool video_requested = false;
@@ -179,6 +181,7 @@ Options parse_options(int argc, char** argv) {
         }
     }
 
+    // Flags such as --frames and --end-scale imply video output even without --video.
     if (video_requested && options.video_path.empty()) {
         options.video_path = "output/mandelbrot.mp4";
     }
@@ -206,6 +209,7 @@ void check_cuda(cudaError_t status, const char* expression) {
 
 #define CUDA_CHECK(call) check_cuda((call), #call)
 
+// RAII wrapper keeps the CUDA stream lifetime exception safe.
 class CudaStream {
   public:
     CudaStream() {
@@ -229,6 +233,7 @@ class CudaStream {
     cudaStream_t stream_ = nullptr;
 };
 
+// Reuses one pinned host frame and one device frame for stills and videos.
 class FrameBuffers {
   public:
     explicit FrameBuffers(std::size_t byte_count) : byte_count_(byte_count) {
@@ -280,6 +285,7 @@ void create_parent_directory(const std::string& file_path) {
     }
 }
 
+// Render on the GPU, copy the RGBA frame back, then wait before consumers read it.
 void render_frame(const Options& options, double scale, FrameBuffers& buffers, cudaStream_t stream) {
     CUDA_CHECK(launch_mandelbrot(buffers.device_data(), options.width, options.height, options.iterations,
                                  options.center_x, options.center_y, scale, stream, options.colormap));
@@ -288,6 +294,7 @@ void render_frame(const Options& options, double scale, FrameBuffers& buffers, c
     CUDA_CHECK(cudaStreamSynchronize(stream));
 }
 
+// Smooth exponential interpolation gives the zoom an eased start and finish.
 double video_scale_for_frame(const Options& options, int frame_index) {
     if (options.video_frames <= 1) {
         return options.video_end_scale;
@@ -323,6 +330,7 @@ void save_video(const Options& options, FrameBuffers& buffers, cudaStream_t stre
 
     std::cout << "Encoding video with " << video_encoder_name(options.video_encoder) << "\n";
 
+    // Stream raw frames directly into ffmpeg instead of writing temporary images.
     const int progress_interval = options.video_frames < 10 ? 1 : options.video_frames / 10;
     for (int frame_index = 0; frame_index < options.video_frames; ++frame_index) {
         render_frame(options, video_scale_for_frame(options, frame_index), buffers, stream);
@@ -343,11 +351,12 @@ void save_video(const Options& options, FrameBuffers& buffers, cudaStream_t stre
     std::cout << "\nSaved \"" << options.video_path << "\"\n";
 }
 
-} // namespace
+}
 
 int main(int argc, char** argv) {
     try {
         const Options options = parse_options(argc, argv);
+        // Four bytes per pixel: red, green, blue, and opaque alpha.
         const std::size_t pixel_count = static_cast<std::size_t>(options.width) * static_cast<std::size_t>(options.height);
         FrameBuffers buffers(pixel_count * 4 * sizeof(std::uint8_t));
         CudaStream render_stream;

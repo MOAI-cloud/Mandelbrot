@@ -4,6 +4,7 @@
 
 #include <cstdint>
 
+// Color ramps supported by the CUDA renderer.
 enum class MandelbrotColormap : int {
     Classic,
     Magma,
@@ -13,6 +14,7 @@ enum class MandelbrotColormap : int {
     Turbo,
 };
 
+// Launches Mandelbrot rendering into device_image and returns the CUDA launch status.
 cudaError_t launch_mandelbrot(std::uint8_t* device_image,
                               int width,
                               int height,

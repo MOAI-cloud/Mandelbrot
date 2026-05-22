@@ -9,6 +9,7 @@ bool save_png(const std::string& file_path, const std::uint8_t* rgba_pixels, int
     }
 
     constexpr int channels = 4;
+    // stb writes row-major RGBA pixels; the stride is the byte distance between rows.
     const int stride_in_bytes = width * channels;
 
     return stbi_write_png(file_path.c_str(), width, height, channels, rgba_pixels, stride_in_bytes) != 0;
