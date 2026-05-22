@@ -2,6 +2,12 @@
 
 A CUDA/CMake project that renders a Mandelbrot set on the GPU, saves PNG images with `stb_image_write.h`, and can stream zoom animations to MP4 through `ffmpeg`. The renderer uses smooth escape-time coloring with selectable perceptual colormaps.
 
+## Demo
+
+<video src="https://raw.githubusercontent.com/MOAI-cloud/Mandelbrot/main/assets/mandelbrot-zoom.mp4" controls muted loop playsinline width="100%"></video>
+
+[Download the demo video](assets/mandelbrot-zoom.mp4)
+
 ## Requirements
 
 - NVIDIA GPU with a working CUDA driver
