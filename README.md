@@ -74,7 +74,7 @@ Render a 720p zoom video used in README GIF:
 
 If your `ffmpeg` build supports NVIDIA hardware encoding, add `--video-encoder h264_nvenc` for faster MP4 encoding. `libx264` is the default because it is widely available and reliable on machines without NVENC.
 
-Create the GIF preview used in this README:
+Create the GIF preview used in this README.md:
 
 ```sh
 ffmpeg -y -i output/mandelbrot-zoom.mp4 \
